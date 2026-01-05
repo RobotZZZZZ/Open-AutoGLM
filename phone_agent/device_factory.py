@@ -37,10 +37,6 @@ class DeviceFactory:
                 from phone_agent import adb
 
                 self._module = adb
-            elif self.device_type == DeviceType.HDC:
-                from phone_agent import hdc
-
-                self._module = hdc
             else:
                 raise ValueError(f"Unknown device type: {self.device_type}")
         return self._module
@@ -131,10 +127,6 @@ class DeviceFactory:
             from phone_agent.adb import ADBConnection
 
             return ADBConnection
-        elif self.device_type == DeviceType.HDC:
-            from phone_agent.hdc import HDCConnection
-
-            return HDCConnection
         else:
             raise ValueError(f"Unknown device type: {self.device_type}")
 

@@ -351,179 +351,6 @@ def check_model_api(base_url: str, model_name: str, api_key: str = "EMPTY") -> b
 
     return all_passed
 
-
-def parse_args() -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Phone Agent - AI-powered phone automation",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-    # Run with default settings (Android)
-    python main.py
-
-    # Specify model endpoint
-    python main.py --base-url http://localhost:8000/v1
-
-    # Use API key for authentication
-    python main.py --apikey sk-xxxxx
-
-    # Run with specific device
-    python main.py --device-id emulator-5554
-
-    # Connect to remote device
-    python main.py --connect 192.168.1.100:5555
-
-    # List connected devices
-    python main.py --list-devices
-
-    # Enable TCP/IP on USB device and get connection info
-    python main.py --enable-tcpip
-
-    # List supported apps
-    python main.py --list-apps
-
-    # iOS specific examples
-    # Run with iOS device
-    python main.py --device-type ios "Open Safari and search for iPhone tips"
-
-    # Use WiFi connection for iOS
-    python main.py --device-type ios --wda-url http://192.168.1.100:8100
-
-    # List connected iOS devices
-    python main.py --device-type ios --list-devices
-
-    # Check WebDriverAgent status
-    python main.py --device-type ios --wda-status
-
-    # Pair with iOS device
-    python main.py --device-type ios --pair
-        """,
-    )
-
-    # Model options
-    parser.add_argument(
-        "--base-url",
-        type=str,
-        default=os.getenv("PHONE_AGENT_BASE_URL", "http://localhost:8000/v1"),
-        help="Model API base URL",
-    )
-
-    parser.add_argument(
-        "--model",
-        type=str,
-        default=os.getenv("PHONE_AGENT_MODEL", "autoglm-phone-9b"),
-        help="Model name",
-    )
-
-    parser.add_argument(
-        "--apikey",
-        type=str,
-        default=os.getenv("PHONE_AGENT_API_KEY", "EMPTY"),
-        help="API key for model authentication",
-    )
-
-    parser.add_argument(
-        "--max-steps",
-        type=int,
-        default=int(os.getenv("PHONE_AGENT_MAX_STEPS", "100")),
-        help="Maximum steps per task",
-    )
-
-    # Device options
-    parser.add_argument(
-        "--device-id",
-        "-d",
-        type=str,
-        default=os.getenv("PHONE_AGENT_DEVICE_ID"),
-        help="ADB device ID",
-    )
-
-    parser.add_argument(
-        "--connect",
-        "-c",
-        type=str,
-        metavar="ADDRESS",
-        help="Connect to remote device (e.g., 192.168.1.100:5555)",
-    )
-
-    parser.add_argument(
-        "--disconnect",
-        type=str,
-        nargs="?",
-        const="all",
-        metavar="ADDRESS",
-        help="Disconnect from remote device (or 'all' to disconnect all)",
-    )
-
-    parser.add_argument(
-        "--list-devices", action="store_true", help="List connected devices and exit"
-    )
-
-    parser.add_argument(
-        "--enable-tcpip",
-        type=int,
-        nargs="?",
-        const=5555,
-        metavar="PORT",
-        help="Enable TCP/IP debugging on USB device (default port: 5555)",
-    )
-
-    # iOS specific options
-    parser.add_argument(
-        "--wda-url",
-        type=str,
-        default=os.getenv("PHONE_AGENT_WDA_URL", "http://localhost:8100"),
-        help="WebDriverAgent URL for iOS (default: http://localhost:8100)",
-    )
-
-    parser.add_argument(
-        "--pair",
-        action="store_true",
-        help="Pair with iOS device (required for some operations)",
-    )
-
-    parser.add_argument(
-        "--wda-status",
-        action="store_true",
-        help="Show WebDriverAgent status and exit (iOS only)",
-    )
-
-    # Other options
-    parser.add_argument(
-        "--quiet", "-q", action="store_true", help="Suppress verbose output"
-    )
-
-    parser.add_argument(
-        "--list-apps", action="store_true", help="List supported apps and exit"
-    )
-
-    parser.add_argument(
-        "--lang",
-        type=str,
-        choices=["cn", "en"],
-        default=os.getenv("PHONE_AGENT_LANG", "cn"),
-        help="Language for system prompt (cn or en, default: cn)",
-    )
-
-    parser.add_argument(
-        "--device-type",
-        type=str,
-        choices=["adb", "hdc", "ios"],
-        default=os.getenv("PHONE_AGENT_DEVICE_TYPE", "adb"),
-        help="Device type: adb for Android, hdc for HarmonyOS, ios for iPhone (default: adb)",
-    )
-
-    parser.add_argument(
-        "task",
-        nargs="?",
-        type=str,
-        help="Task to execute (interactive mode if not provided)",
-    )
-
-    return parser.parse_args()
-
-
 def handle_ios_device_commands(args) -> bool:
     """
     Handle iOS device-related commands.
@@ -612,10 +439,6 @@ def handle_device_commands(args) -> bool:
         else (DeviceType.HDC if args.device_type == "hdc" else DeviceType.IOS)
     )
 
-    # Handle iOS-specific commands
-    if device_type == DeviceType.IOS:
-        return handle_ios_device_commands(args)
-
     device_factory = get_device_factory()
     ConnectionClass = device_factory.get_connection_class()
     conn = ConnectionClass()
@@ -683,68 +506,56 @@ def handle_device_commands(args) -> bool:
 
 def main():
     """Main entry point."""
-    args = parse_args()
+    # 参数设置
+    args = {
+        "base_url": os.getenv("PHONE_AGENT_BASE_URL", "http://localhost:8000/v1"),
+        "model": os.getenv("PHONE_AGENT_MODEL", "autoglm-phone-9b"),
+        "apikey": os.getenv("PHONE_AGENT_API_KEY", "EMPTY"),
+        "max_steps": int(os.getenv("PHONE_AGENT_MAX_STEPS", "100")),
+        "device_id": os.getenv("PHONE_AGENT_DEVICE_ID"),
+        "connect": os.getenv("PHONE_AGENT_CONNECT"),
+        "disconnect": os.getenv("PHONE_AGENT_DISCONNECT"),
+        "list_devices": os.getenv("PHONE_AGENT_LIST_DEVICES"),
+        "enable_tcpip": os.getenv("PHONE_AGENT_ENABLE_TCPIP"),
+        "quiet": os.getenv("PHONE_AGENT_QUIET"),
+        "list_apps": os.getenv("PHONE_AGENT_LIST_APPS"),
+        "lang": os.getenv("PHONE_AGENT_LANG", "cn"),
+        "device_type": os.getenv("PHONE_AGENT_DEVICE_TYPE", "adb"),
+        "task": os.getenv("PHONE_AGENT_TASK"),
+    }
 
-    # Set device type globally based on args
-    if args.device_type == "adb":
-        device_type = DeviceType.ADB
-    elif args.device_type == "hdc":
-        device_type = DeviceType.HDC
-    else:  # ios
-        device_type = DeviceType.IOS
+    # 默认使用adb设备
+    device_type = DeviceType.ADB
 
-    # Set device type globally for non-iOS devices
-    if device_type != DeviceType.IOS:
-        set_device_type(device_type)
+    # 设置设备
+    set_device_type(device_type)
 
-    # Enable HDC verbose mode if using HDC
-    if device_type == DeviceType.HDC:
-        from phone_agent.hdc import set_hdc_verbose
-
-        set_hdc_verbose(True)
-
-    # Handle --list-apps (no system check needed)
+    # 列出支持的app列表
     if args.list_apps:
-        if device_type == DeviceType.HDC:
-            print("Supported HarmonyOS apps:")
-            apps = list_harmonyos_apps()
-        elif device_type == DeviceType.IOS:
-            print("Supported iOS apps:")
-            print("\nNote: For iOS apps, Bundle IDs are configured in:")
-            print("  phone_agent/config/apps_ios.py")
-            print("\nCurrently configured apps:")
-            apps = list_ios_apps()
-        else:
-            print("Supported Android apps:")
-            apps = list_supported_apps()
+        print("Supported Android apps:")
+        apps = list_supported_apps()
 
         for app in sorted(apps):
             print(f"  - {app}")
 
-        if device_type == DeviceType.IOS:
-            print(
-                "\nTo add iOS apps, find the Bundle ID and add to APP_PACKAGES_IOS dictionary."
-            )
         return
 
-    # Handle device commands (these may need partial system checks)
+    # 通过命令行创建设备连接
     if handle_device_commands(args):
         return
 
-    # Run system requirements check before proceeding
+    # 依赖检查
     if not check_system_requirements(
         device_type,
-        wda_url=args.wda_url
-        if device_type == DeviceType.IOS
-        else "http://localhost:8100",
+        wda_url="http://localhost:8100",
     ):
         sys.exit(1)
 
-    # Check model API connectivity and model availability
+    # 依赖服务检查
     if not check_model_api(args.base_url, args.model, args.apikey):
         sys.exit(1)
 
-    # Create configurations and agent based on device type
+    # 创建模型配置
     model_config = ModelConfig(
         base_url=args.base_url,
         model_name=args.model,
@@ -752,40 +563,23 @@ def main():
         lang=args.lang,
     )
 
-    if device_type == DeviceType.IOS:
-        # Create iOS agent
-        agent_config = IOSAgentConfig(
-            max_steps=args.max_steps,
-            wda_url=args.wda_url,
-            device_id=args.device_id,
-            verbose=not args.quiet,
-            lang=args.lang,
-        )
+    # 创建agent配置
+    agent_config = AgentConfig(
+        max_steps=args.max_steps,
+        device_id=args.device_id,
+        verbose=not args.quiet,
+        lang=args.lang,
+    )
 
-        agent = IOSPhoneAgent(
-            model_config=model_config,
-            agent_config=agent_config,
-        )
-    else:
-        # Create Android/HarmonyOS agent
-        agent_config = AgentConfig(
-            max_steps=args.max_steps,
-            device_id=args.device_id,
-            verbose=not args.quiet,
-            lang=args.lang,
-        )
+    # 创建agent
+    agent = PhoneAgent(
+        model_config=model_config,
+        agent_config=agent_config,
+    )
 
-        agent = PhoneAgent(
-            model_config=model_config,
-            agent_config=agent_config,
-        )
-
-    # Print header
+    # 打印信息
     print("=" * 50)
-    if device_type == DeviceType.IOS:
-        print("Phone Agent iOS - AI-powered iOS automation")
-    else:
-        print("Phone Agent - AI-powered phone automation")
+    print("Phone Agent - AI-powered phone automation")
     print("=" * 50)
     print(f"Model: {model_config.model_name}")
     print(f"Base URL: {model_config.base_url}")
@@ -793,60 +587,21 @@ def main():
     print(f"Language: {agent_config.lang}")
     print(f"Device Type: {args.device_type.upper()}")
 
-    # Show iOS-specific config
-    if device_type == DeviceType.IOS:
-        print(f"WDA URL: {args.wda_url}")
-
-    # Show device info
-    if device_type == DeviceType.IOS:
-        devices = list_ios_devices()
-        if agent_config.device_id:
-            print(f"Device: {agent_config.device_id}")
-        elif devices:
-            device = devices[0]
-            print(f"Device: {device.device_name or device.device_id[:16]}")
-            if device.model and device.ios_version:
-                print(f"        {device.model}, iOS {device.ios_version}")
-    else:
-        device_factory = get_device_factory()
-        devices = device_factory.list_devices()
-        if agent_config.device_id:
-            print(f"Device: {agent_config.device_id}")
-        elif devices:
-            print(f"Device: {devices[0].device_id} (auto-detected)")
+    # 显示设备信息
+    device_factory = get_device_factory()
+    devices = device_factory.list_devices()
+    if agent_config.device_id:
+        print(f"Device: {agent_config.device_id}")
+    elif devices:
+        print(f"Device: {devices[0].device_id} (auto-detected)")
 
     print("=" * 50)
 
-    # Run with provided task or enter interactive mode
+    # 任务执行
     if args.task:
         print(f"\nTask: {args.task}\n")
         result = agent.run(args.task)
         print(f"\nResult: {result}")
-    else:
-        # Interactive mode
-        print("\nEntering interactive mode. Type 'quit' to exit.\n")
-
-        while True:
-            try:
-                task = input("Enter your task: ").strip()
-
-                if task.lower() in ("quit", "exit", "q"):
-                    print("Goodbye!")
-                    break
-
-                if not task:
-                    continue
-
-                print()
-                result = agent.run(task)
-                print(f"\nResult: {result}\n")
-                agent.reset()
-
-            except KeyboardInterrupt:
-                print("\n\nInterrupted. Goodbye!")
-                break
-            except Exception as e:
-                print(f"\nError: {e}\n")
 
 
 if __name__ == "__main__":
