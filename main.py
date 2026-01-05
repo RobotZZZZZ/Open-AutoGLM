@@ -18,6 +18,7 @@ import os
 import shutil
 import subprocess
 import sys
+from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from openai import OpenAI
@@ -507,7 +508,11 @@ def handle_device_commands(args) -> bool:
 def main():
     """Main entry point."""
     # 参数设置
-    args = {
+    import dotenv
+
+    dotenv.load_dotenv()
+    
+    args_dict = {
         "base_url": os.getenv("PHONE_AGENT_BASE_URL", "http://localhost:8000/v1"),
         "model": os.getenv("PHONE_AGENT_MODEL", "autoglm-phone-9b"),
         "apikey": os.getenv("PHONE_AGENT_API_KEY", "EMPTY"),
@@ -523,6 +528,8 @@ def main():
         "device_type": os.getenv("PHONE_AGENT_DEVICE_TYPE", "adb"),
         "task": os.getenv("PHONE_AGENT_TASK"),
     }
+    # 将字典转换为支持点号访问的对象
+    args = SimpleNamespace(**args_dict)
 
     # 默认使用adb设备
     device_type = DeviceType.ADB
